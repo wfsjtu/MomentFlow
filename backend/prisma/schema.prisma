@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Drama {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  coverImage  String?
+  videoUrl    String
+  duration    Int      // 视频时长（秒）
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  highlights  Highlight[]
+  interactions Interaction[]
+
+  @@map("dramas")
+}
+
+model Highlight {
+  id          String   @id @default(cuid())
+  dramaId     String
+  timestamp    Int      // 高光时间戳（秒）
+  type        String   // conflict, twist, highlight, romance
+  component   String   // emoji_burst
+  emojis      String   // JSON 格式存储的表情数组
+  label        String?
+  duration     Int      // 组件展示时长（秒）
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  drama       Drama    @relation(fields: [dramaId], references: [id], onDelete: Cascade)
+  interactions Interaction[]
+
+  @@map("highlights")
+  @@index([dramaId])
+}
+
+model Interaction {
+  id          String   @id @default(cuid())
+  dramaId     String
+  highlightId String?
+  userId      String
+  emoji       String
+  timestamp    Int      // 互动发生的时间戳（秒）
+  createdAt   DateTime @default(now())
+  drama       Drama    @relation(fields: [dramaId], references: [id], onDelete: Cascade)
+  highlight    Highlight? @relation(fields: [highlightId], references: [id], onDelete: SetNull)
+
+  @@map("interactions")
+  @@index([dramaId])
+  @@index([highlightId])
+}
